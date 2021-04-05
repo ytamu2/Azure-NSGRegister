@@ -63,5 +63,8 @@ NSGのエクスポートのみ実行したい場合指定します。
 UTF8で記述ください。  
 先頭文字が`#`の場合、スキップします。  
 
+## フォルダの作成
+`bin`と同じ階層に`log`フォルダを作成します。  
+
 ## 実行例
 AzureNSGRegister.ps1 -ConfigFileName Setting.json
