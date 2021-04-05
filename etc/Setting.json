@@ -1,0 +1,116 @@
+{
+    "Azure": {
+        "SubscriptionID": "",
+        "TenantID": ""
+    },
+    "Convert": {
+        "EntryType": [
+            {
+                "Caption": "登録",
+                "DeleteRule": false
+            },
+            {
+                "Caption": "削除",
+                "DeleteRule": true
+            }
+        ]
+    },
+    "Import": {
+        "InitialDirectory": "C:\\",
+        "csv": {
+            "Delimiter": "\t"
+        }
+    },
+    "Export": {
+        "Directory": "",
+        "csv": {
+            "Delimiter": "\t"
+        }
+    },
+    "Layout": [
+        {
+            "Title": "EntryType",
+            "Resource": "EntryType",
+            "in": 0,
+            "out": -1,
+            "NSGResource": false
+        },
+        {
+            "Title": "NSGName",
+            "Resource": "Name",
+            "in": 1,
+            "out": 0,
+            "NSGResource": true
+        },
+        {
+            "Title": "ResourceGroup",
+            "Resource": "ResourceGroupName",
+            "in": 2,
+            "out": 1,
+            "NSGResource": true
+        },
+        {
+            "Title": "Direction",
+            "Resource": "Direction",
+            "in": 3,
+            "out": 2,
+            "NSGResource": false
+        },
+        {
+            "Title": "Priority",
+            "Resource": "Priority",
+            "in": 4,
+            "out": 3,
+            "NSGResource": false
+        },
+        {
+            "Title": "RuleName",
+            "Resource": "Name",
+            "in": 5,
+            "out": 4,
+            "NSGResource": false
+        },
+        {
+            "Title": "SourceAddressPrefix",
+            "Resource": "SourceAddressPrefix",
+            "in": 6,
+            "out": 5,
+            "NSGResource": false
+        },
+        {
+            "Title": "SourcePortRange",
+            "Resource": "SourcePortRange",
+            "in": 7,
+            "out": 6,
+            "NSGResource": false
+        },
+        {
+            "Title": "DestinationAddressPrefix",
+            "Resource": "DestinationAddressPrefix",
+            "in": 8,
+            "out": 7,
+            "NSGResource": false
+        },
+        {
+            "Title": "DestinationPortRange",
+            "Resource": "DestinationPortRange",
+            "in": 9,
+            "out": 8,
+            "NSGResource": false
+        },
+        {
+            "Title": "Protocol",
+            "Resource": "Protocol",
+            "in": 10,
+            "out": 9,
+            "NSGResource": false
+        },
+        {
+            "Title": "Access",
+            "Resource": "Access",
+            "in": 11,
+            "out": 10,
+            "NSGResource": false
+        }
+    ]
+}
