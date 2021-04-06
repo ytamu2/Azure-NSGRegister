@@ -1,7 +1,6 @@
 EntryType	NSGName	ResourceGroup	Direction	Priority	RuleName	SourceAddressPrefix	SourcePortRange	DestinationAddressPrefix	DestinationPortRange	Protocol	Access
 登録	sample-nsg	sample-rg	Inbound	100	AllowRDP	10.0.0.5	*	*	3389	TCP	Allow
 #登録	sample-nsg	sample-rg	Inbound	300	AllowRDP3	10.0.0.5	*	*	3389	TCP	Allow
-削除	sample-nsg	sample-rg	Inbound	200	Allowssh	10.0.0.5	*	*	22	TCP	Allow
 登録	sample2-nsg	sample-rg	Inbound	100	AllowRDP	10.0.0.5	*	*	3389	TCP	Allow
 登録	sample-nsg	sample-rg	Inbound	200	AllowCIFS	10.0.0.5,10.0.1.5,10.0.1.6	*	*	445	TCP	Allow
 登録	sample-nsg	sample-rg	outbound	200	AllowVnet	*	*	VirtualNetwork	80,443	*	Allow

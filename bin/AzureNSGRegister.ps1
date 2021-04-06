@@ -36,7 +36,7 @@ function importNSG {
     $LogDirection = @{"Inbound" = "受信"; "Outbound" = "送信" }
     # 一意のNSG名を取得
     $UniqueNSGNames = ($Importcsv | where { $_.$NSGColumnName -notin ($null, "") } | where { $_.$ResourceGroupColumnName -notin ($null, "") } | sort $NSGColumnName -Unique).$NSGColumnName
-    $Targetcsv = ($Importcsv | where { $_.$EntryTypeColumnName -eq ($Settingjson.Convert.EntryType | where { $_.DeleteRule -eq $true }).Caption }) + ($Importcsv | where { $_.$EntryTypeColumnName -eq ($Settingjson.Convert.EntryType | where { $_.DeleteRule -eq $false }).Caption })
+    $Targetcsv = @($Importcsv | where { $_.$EntryTypeColumnName -eq ($Settingjson.Convert.EntryType | where { $_.DeleteRule -eq $true }).Caption }) + @($Importcsv | where { $_.$EntryTypeColumnName -eq ($Settingjson.Convert.EntryType | where { $_.DeleteRule -eq $false }).Caption })
     $Targetcsv = $Targetcsv | where { $_.$NSGColumnName -notin ($null, "") } | where { $_.$ResourceGroupColumnName -notin ($null, "") }
 
     foreach ($UniqueNSGName in $UniqueNSGNames) {
