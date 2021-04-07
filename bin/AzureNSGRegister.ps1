@@ -40,7 +40,7 @@ function importNSG {
     $Targetcsv = $Targetcsv | where { $_.$NSGColumnName -notin ($null, "") } | where { $_.$ResourceGroupColumnName -notin ($null, "") }
 
     foreach ($UniqueNSGName in $UniqueNSGNames) {
-        $UpdateNSG = $true
+        $UpdateNSG = $false
         $Log.Info("NSG「$UniqueNSGName」のインポート処理を開始します。")
         $initImport = $true
         foreach ($csvLine in ($Targetcsv | where { $_.$NSGColumnName -eq $UniqueNSGName })) {
@@ -66,9 +66,7 @@ function importNSG {
             }
             if (!$NSG -and $EntryType -eq $DeleteCaption) {
                 $Log.Warn("NSG「${NSGName}」が存在しないため、$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の削除はスキップします。")
-                $Log.Warn("NSG「${NSGName}」のインポート処理を中断します。")
-                $UpdateNSG = $false
-                break
+                continue
             }
 
             if (!$NSG) {
@@ -89,7 +87,7 @@ function importNSG {
             if ($EntryType -eq $DeleteCaption) {
                 $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の削除を開始します。")
                 if (!$NSGRule) {
-                    $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」は存在しないため、スキップします。")
+                    $Log.Warn("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」は存在しないため、スキップします。")
                     continue
                 }
                 $resultRemoveNSGRule = $null
@@ -103,6 +101,7 @@ function importNSG {
                 }
 
                 $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の削除に成功しました。")
+                $UpdateNSG = $true
                 continue
             }
 
@@ -118,6 +117,7 @@ function importNSG {
                 }
 
                 $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の追加に成功しました。")
+                $UpdateNSG = $true
                 continue
             }
 
@@ -132,6 +132,7 @@ function importNSG {
                 break
             }
             $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の更新に成功しました。")
+            $UpdateNSG = $true
         }
         if ($UpdateNSG ) {
             $Log.Info("NSG「$NSGName」のセキュリティ規則を更新します。")
