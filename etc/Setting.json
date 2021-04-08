@@ -1,7 +1,6 @@
 {
     "Azure": {
-        "SubscriptionID": "",
-        "TenantID": ""
+        "SubscriptionID": ""
     },
     "Convert": {
         "EntryType": [

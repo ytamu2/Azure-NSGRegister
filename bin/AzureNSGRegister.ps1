@@ -280,7 +280,7 @@ try {
     }
 
     # Azureログイン
-    $LoginInfo = Login-AzAccount -Tenant $Settingjson.Azure.TenantID -Subscription $Settingjson.Azure.SubscriptionID
+    $LoginInfo = Login-AzAccount -Subscription $Settingjson.Azure.SubscriptionID
 
     if (!$LoginInfo) {
         $Log.Error("Azureのログインに失敗しました。サブスクリプションID：$($Settingjson.Azure.SubscriptionID)", $returnCode.Error)

@@ -19,8 +19,6 @@ Azure PowerShell 5.7.0
 コンフィグファイル（サンプルではSetting.json）に値を入力します。
 
 - Azure
-    - TenantID
-        - 接続するテナントID
     - SubscriptionID
         - 接続するサブスクリプションID
 - Convert
