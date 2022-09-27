@@ -45,106 +45,110 @@ function importNSG {
         $initImport = $true
         foreach ($csvLine in ($Targetcsv | where { $_.$NSGColumnName -eq $UniqueNSGName })) {
             # データ取得
-            $NSGName = $csvLine.$NSGColumnName
-            $ResourceGroupName = $csvLine.$ResourceGroupColumnName
-            $EntryType = $csvLine.$EntryTypeColumnName
-            $RuleName = $csvLine.$(($InLayoutjson | where { $_.NSGResource -eq $false -and $_.Resource -eq "Name" }).Title)
-            $Direction = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Direction" }).Title)
-            $Priority = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Priority" }).Title)
-            $SourceAddressPrefix = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "SourceAddressPrefix" }).Title).Split(","))
-            $SourcePortRange = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "SourcePortRange" }).Title).Split(","))
-            $DestinationAddressPrefix = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "DestinationAddressPrefix" }).Title).Split(","))
-            $DestinationPortRange = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "DestinationPortRange" }).Title).Split(","))
-            $Protocol = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Protocol" }).Title)
-            $Access = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Access" }).Title)
+            $ImportData = @{
+                NSGName                              = $csvLine.$NSGColumnName
+                ResourceGroupName                    = $csvLine.$ResourceGroupColumnName
+                EntryType                            = $csvLine.$EntryTypeColumnName
+                RuleName                             = $csvLine.$(($InLayoutjson | where { $_.NSGResource -eq $false -and $_.Resource -eq "Name" }).Title)
+                Direction                            = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Direction" }).Title)
+                Priority                             = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Priority" }).Title)
+                SourceAddressPrefix                  = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "SourceAddressPrefix" }).Title).Split(","))
+                SourceApplicationSecurityGroups      = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "SourceApplicationSecurityGroups" }).Title)
+                SourcePortRange                      = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "SourcePortRange" }).Title).Split(","))
+                DestinationAddressPrefix             = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "DestinationAddressPrefix" }).Title).Split(","))
+                DestinationApplicationSecurityGroups = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "DestinationApplicationSecurityGroups" }).Title)
+                DestinationPortRange                 = @($csvLine.$(($InLayoutjson | where { $_.Resource -eq "DestinationPortRange" }).Title).Split(","))
+                Protocol                             = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Protocol" }).Title)
+                Access                               = $csvLine.$(($InLayoutjson | where { $_.Resource -eq "Access" }).Title)
+            }
 
             if ($initImport) {
-                $ResourceGroup = Get-AzResourceGroup -Name $ResourceGroupName
+                $ResourceGroup = Get-AzResourceGroup -Name $ImportData.ResourceGroupName
                 $NSG = $null
-                $NSG = Get-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroup.ResourceGroupName -Name $NSGName
+                $NSG = Get-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroup.ResourceGroupName -Name $ImportData.NSGName
                 $initImport = $false
             }
-            if (!$NSG -and $EntryType -eq $DeleteCaption) {
-                $Log.Warn("NSG「${NSGName}」が存在しないため、$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の削除はスキップします。")
+            if (!$NSG -and $ImportData.EntryType -eq $DeleteCaption) {
+                $Log.Warn("NSG「$($ImportData.NSGName)」が存在しないため、$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の削除はスキップします。")
                 continue
             }
 
             if (!$NSG) {
-                $Log.Info("NSG「$NSGName」を作成します。")
-                $NSG = New-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroup.ResourceGroupName -Name $NSGName -Location $ResourceGroup.Location
+                $Log.Info("NSG「$($ImportData.NSGName)」を作成します。")
+                $NSG = New-AzNetworkSecurityGroup -ResourceGroupName $ResourceGroup.ResourceGroupName -Name $ImportData.NSGName -Location $ResourceGroup.Location
                 if (!$NSG) {
-                    $Log.Error("NSG「${NSGName}」の作成に失敗しました。")
+                    $Log.Error("NSG「$($ImportData.NSGName)」の作成に失敗しました。")
                     $UpdateNSG = $false
                     $resultImportNSG = $returnCode.Error
                     break
                 }
-                $Log.Info("NSG「$NSGName」の作成に成功しました。")
+                $Log.Info("NSG「$($ImportData.NSGName)」の作成に成功しました。")
             }
 
             $NSGRule = $null
-            $NSGRule = Get-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $RuleName
+            $NSGRule = Get-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName
 
-            if ($EntryType -eq $DeleteCaption) {
-                $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の削除を開始します。")
+            if ($ImportData.EntryType -eq $DeleteCaption) {
+                $Log.Info("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の削除を開始します。")
                 if (!$NSGRule) {
-                    $Log.Warn("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」は存在しないため、スキップします。")
+                    $Log.Warn("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」は存在しないため、スキップします。")
                     continue
                 }
                 $resultRemoveNSGRule = $null
-                $resultRemoveNSGRule = Remove-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $RuleName
+                $resultRemoveNSGRule = Remove-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName
 
                 if (!$resultRemoveNSGRule) {
-                    $Log.Error("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の削除に失敗しました。")
+                    $Log.Error("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の削除に失敗しました。")
                     $UpdateNSG = $false
                     $resultImportNSG = $returnCode.Error
                     break
                 }
 
-                $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の削除に成功しました。")
+                $Log.Info("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の削除に成功しました。")
                 $UpdateNSG = $true
                 continue
             }
 
             if (!$NSGRule) {
-                $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の追加を開始します。")
+                $Log.Info("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の追加を開始します。")
                 $resultAddNSGRule = $null
-                $resultAddNSGRule = Add-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $RuleName -Priority $Priority -Direction $Direction -Access $Access -Protocol $Protocol -SourceAddressPrefix $SourceAddressPrefix -SourcePortRange $SourcePortRange -DestinationAddressPrefix $DestinationAddressPrefix -DestinationPortRange $DestinationPortRange
+                $resultAddNSGRule = setNWSecurityRule -NSG $NSG -ImportData $ImportData -Log $Log -AddRule 
                 if (!$resultAddNSGRule) {
-                    $Log.Error("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の追加に失敗しました。")
+                    $Log.Error("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の追加に失敗しました。")
                     $UpdateNSG = $false
                     $resultImportNSG = $returnCode.Error
                     break
                 }
 
-                $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の追加に成功しました。")
+                $Log.Info("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の追加に成功しました。")
                 $UpdateNSG = $true
                 continue
             }
 
-            $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の更新を開始します。")
+            $Log.Info("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の更新を開始します。")
             $resultSetNSGRule = $null
-            $resultSetNSGRule = Set-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $RuleName -Priority $Priority -Direction $Direction -Access $Access -Protocol $Protocol -SourceAddressPrefix $SourceAddressPrefix -SourcePortRange $SourcePortRange -DestinationAddressPrefix $DestinationAddressPrefix -DestinationPortRange $DestinationPortRange
+            $resultSetNSGRule = setNWSecurityRule -NSG $NSG -ImportData $ImportData -Log $Log
 
             if (!$resultSetNSGRule) {
-                $Log.Error("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の更新に失敗しました。")
+                $Log.Error("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の更新に失敗しました。")
                 $UpdateNSG = $false
                 $resultImportNSG = $returnCode.Error
                 break
             }
-            $Log.Info("$($LogDirection.$Direction)セキュリティ規則「${RuleName}」の更新に成功しました。")
+            $Log.Info("$($LogDirection.$($ImportData.Direction))セキュリティ規則「$($ImportData.RuleName)」の更新に成功しました。")
             $UpdateNSG = $true
         }
         if ($UpdateNSG ) {
-            $Log.Info("NSG「$NSGName」のセキュリティ規則を更新します。")
+            $Log.Info("NSG「$($ImportData.NSGName)」のセキュリティ規則を更新します。")
             $resultNSG = $null
             $resultNSG = Set-AzNetworkSecurityGroup -NetworkSecurityGroup $NSG
             if (!$resultNSG) {
                 $Log.Error($error[0])
-                $Log.Error("NSG「$NSGName」のセキュリティ規則更新に失敗しました。")
+                $Log.Error("NSG「$($ImportData.NSGName)」のセキュリティ規則更新に失敗しました。")
                 $resultImportNSG = $returnCode.Error
                 continue
             }
-            $Log.Info("NSG「$NSGName」のセキュリティ規則更新に成功しました。")
+            $Log.Info("NSG「$($ImportData.NSGName)」のセキュリティ規則更新に成功しました。")
         }
 
         $Log.Info("NSG「$UniqueNSGName」のインポート処理を終了します。")
@@ -171,13 +175,36 @@ function exportNSG {
     }
 
     $Log.info("出力可能な全てのNSGを取得します。")
-    $NSGALL = Get-AzNetworkSecurityGroup
-    if (!$NSGALL) {
+    try {
+        $NSGALL = Get-AzNetworkSecurityGroup
+        $Log.info("NSG数：$($NSGALL.Count)")
+        $Log.info("NSG：$($NSGALL.Name)")
+        if (!$NSGALL) {
+            $Log.info("出力可能なNSGが存在しないため、出力処理を終了します。")
+            return $returnCode.Success
+        }
+    }
+    catch {
         $Log.Error("NSGの取得に失敗しました。")
-        return $returnCode.Error
+        $Log.Error($_.Exception)
+        return $returnCode.Exception
     }
     $Log.Info("NSGの取得に成功しました。")
     
+
+    $Log.info("全てのASGを取得します。")
+    try {
+        $ASGAll = Get-AzApplicationSecurityGroup
+        $Log.info("ASG数：$($ASGAll.Count)")
+        $Log.info("ASG：$($ASGAll.Name)")
+    }
+    catch {
+        $Log.Error("ASGの取得に失敗しました。")
+        $Log.Error($_.Exception)
+        return $returnCode.Exception
+    }
+    $Log.info("ASGの取得に成功しました。")
+
     foreach ($NSG in $NSGALL) {
         $Log.Info("NSG「$($NSG.Name)」の定義出力を開始します。")
 
@@ -187,13 +214,21 @@ function exportNSG {
 
         foreach ($Rule in ($NSG.SecurityRules | sort Direction, Priority)) {
             $OutLine = @()
+    
             foreach ($eachLayout in $OutLayoutjson) {
                 $Column = $Rule
                 if ($eachLayout.NSGResource) {
                     $Column = $NSG
                 }
 
-                $OutLine += $Column.$($eachLayout.Resource) -join ","
+                $eachValue = $Column.$($eachLayout.Resource)
+                
+                if ($eachValue -and $eachLayout.Resource -match $asgColumName) {
+                    $ASGName = ($ASGAll | where { $_.Id -eq $eachValue.Id }).Name
+                    $eachValue = $ASGName
+                }
+
+                $OutLine += $eachValue -join ","
             }
             $OutNSG += "`n" + $($OutLine -join $Settingjson.Export.csv.Delimiter)
 
@@ -209,6 +244,83 @@ function exportNSG {
     return $returnCode.Success
 }
 
+function setNWSecurityRule {
+    param(
+        $NSG,
+        [hashtable] $ImportData,
+        $Log,
+        [switch]$AddRule = $false
+    )
+
+    $execType = [ExecAttributes]::Add -band $AddRule.ToBool()
+
+    $sourceASG = $null
+    if ($ImportData.SourceApplicationSecurityGroups) {
+        $sourceASG = Get-AzApplicationSecurityGroup -Name $ImportData.SourceApplicationSecurityGroups
+        if (!$sourceASG) {
+            $Log.Error("SourceApplicationSecurityGroup「$($ImportData.SourceApplicationSecurityGroups)」の取得に失敗しました。")
+            return $null
+        }
+        $execType += [ExecAttributes]::SourceASG
+    }
+
+    $destinationASG = $null
+    if ($ImportData.DestinationApplicationSecurityGroups) {
+        $destinationASG = Get-AzApplicationSecurityGroup -Name $ImportData.DestinationApplicationSecurityGroups
+        if (!$destinationASG) {
+            $Log.Error("DestinationApplicationSecurityGroup「$($ImportData.DestinationApplicationSecurityGroups)」の取得に失敗しました。")
+            return $null
+        }
+        $execType += [ExecAttributes]::DestinationASG
+    }
+
+    # セキュリティ規則の追加/更新
+    switch ($execType ) {
+        ([ExecAttributes]::Add) {
+            $resultNSGRule = Add-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceAddressPrefix $ImportData.SourceAddressPrefix -SourcePortRange $ImportData.SourcePortRange -DestinationAddressPrefix $ImportData.DestinationAddressPrefix -DestinationPortRange $ImportData.DestinationPortRange
+            continue
+        }
+        ([ExecAttributes]::Add + [ExecAttributes]::SourceASG) {
+            $resultNSGRule = Add-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceApplicationSecurityGroup $sourceASG -SourcePortRange $ImportData.SourcePortRange -DestinationAddressPrefix $ImportData.DestinationAddressPrefix -DestinationPortRange $ImportData.DestinationPortRange 
+            continue
+        }
+        ([ExecAttributes]::Add + [ExecAttributes]::DestinationASG) {
+            $resultNSGRule = Add-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceAddressPrefix $ImportData.SourceAddressPrefix -SourcePortRange $ImportData.SourcePortRange -DestinationApplicationSecurityGroup $destinationASG -DestinationPortRange $ImportData.DestinationPortRange 
+            continue
+        }
+        ([ExecAttributes]::Add + [ExecAttributes]::SourceASG + [ExecAttributes]::DestinationASG) {
+            $resultNSGRule = Add-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceApplicationSecurityGroup $sourceASG -SourcePortRange $ImportData.SourcePortRange -DestinationApplicationSecurityGroup $destinationASG -DestinationPortRange $ImportData.DestinationPortRange
+            continue
+        }
+        ([ExecAttributes]::None) {
+            $resultNSGRule = Set-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceAddressPrefix $ImportData.SourceAddressPrefix -SourcePortRange $ImportData.SourcePortRange -DestinationAddressPrefix $ImportData.DestinationAddressPrefix -DestinationPortRange $ImportData.DestinationPortRange -SourceApplicationSecurityGroup @() -DestinationApplicationSecurityGroup @()
+            continue
+        }
+        ([ExecAttributes]::SourceASG) {
+            $resultNSGRule = Set-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceApplicationSecurityGroup $sourceASG -SourcePortRange $ImportData.SourcePortRange -DestinationAddressPrefix $ImportData.DestinationAddressPrefix -DestinationPortRange $ImportData.DestinationPortRange -DestinationApplicationSecurityGroup @()
+            continue
+        }
+        ([ExecAttributes]::DestinationASG) {
+            $resultNSGRule = Set-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceAddressPrefix $ImportData.SourceAddressPrefix -SourcePortRange $ImportData.SourcePortRange -DestinationApplicationSecurityGroup $destinationASG -DestinationPortRange $ImportData.DestinationPortRange -SourceApplicationSecurityGroup @() 
+            continue
+        }
+        ([ExecAttributes]::SourceASG + [ExecAttributes]::DestinationASG) {
+            $resultNSGRule = Set-AzNetworkSecurityRuleConfig -NetworkSecurityGroup $NSG -Name $ImportData.RuleName -Priority $ImportData.Priority -Direction $ImportData.Direction -Access $ImportData.Access -Protocol $ImportData.Protocol -SourceApplicationSecurityGroup $sourceASG -SourcePortRange $ImportData.SourcePortRange -DestinationApplicationSecurityGroup $destinationASG -DestinationPortRange $ImportData.DestinationPortRange
+            continue
+        }
+    }
+
+    return $resultNSGRule
+}
+
+[Flags()] enum ExecAttributes {
+    None = 0
+    Add = 1
+    SourceASG = 2
+    DestinationASG = 4
+    All = 7
+}
+
 ####### メイン処理 #######
 # スクリプト格納ディレクトリを取得
 $scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
@@ -219,7 +331,8 @@ $scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
 
 # エラー、リターンコード設定
 $error.Clear()
-Set-Variable -Name returnCode -Value @{Success = 0; Error = 1; Exception = 99 } -Option ReadOnly
+Set-Variable -Name returnCode -Value @{Success = 0; Error = 1; Exception = 99 } -Option Constant
+Set-Variable -Name asgColumName -Value "ApplicationSecurityGroups" -Option Constant
 # 警告の表示抑止
 Set-Item -Path Env:\SuppressAzurePowerShellBreakingChangeWarnings -Value "true"
 

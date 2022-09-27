@@ -77,38 +77,52 @@
             "NSGResource": false
         },
         {
-            "Title": "SourcePortRange",
-            "Resource": "SourcePortRange",
+            "Title": "SourceApplicationSecurityGroups",
+            "Resource": "SourceApplicationSecurityGroups",
             "in": 7,
             "out": 6,
             "NSGResource": false
         },
         {
-            "Title": "DestinationAddressPrefix",
-            "Resource": "DestinationAddressPrefix",
+            "Title": "SourcePortRange",
+            "Resource": "SourcePortRange",
             "in": 8,
             "out": 7,
             "NSGResource": false
         },
         {
-            "Title": "DestinationPortRange",
-            "Resource": "DestinationPortRange",
+            "Title": "DestinationAddressPrefix",
+            "Resource": "DestinationAddressPrefix",
             "in": 9,
             "out": 8,
             "NSGResource": false
         },
         {
-            "Title": "Protocol",
-            "Resource": "Protocol",
+            "Title": "DestinationApplicationSecurityGroups",
+            "Resource": "DestinationApplicationSecurityGroups",
             "in": 10,
             "out": 9,
             "NSGResource": false
         },
         {
-            "Title": "Access",
-            "Resource": "Access",
+            "Title": "DestinationPortRange",
+            "Resource": "DestinationPortRange",
             "in": 11,
             "out": 10,
+            "NSGResource": false
+        },
+        {
+            "Title": "Protocol",
+            "Resource": "Protocol",
+            "in": 12,
+            "out": 11,
+            "NSGResource": false
+        },
+        {
+            "Title": "Access",
+            "Resource": "Access",
+            "in": 13,
+            "out": 12,
             "NSGResource": false
         }
     ]

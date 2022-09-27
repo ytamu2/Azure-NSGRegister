@@ -8,15 +8,17 @@ Azure NSGの設定をcsvファイルからインポート、csvファイルへ�
 
 セキュリティルールの削除は可能ですが、NSGそのものを削除することはできません。  
 同一NSGの指定で登録と削除が混在している場合、削除処理を先に実行します。  
-Application Security Groupは対応していません。  
+
+2022/9/27  
+NSGのソース、および宛先にApplication Security Groupを設定出来るようにしました。  
 
 # 動作確認環境
-PowerShell 7.1.3  
-Azure PowerShell 5.7.0
+PowerShell 7.2.6  
+Azure PowerShell 8.2.0  
 
 # 準備
 ## コンフィグファイルの設定
-コンフィグファイル（サンプルではSetting.json）に値を入力します。
+コンフィグファイル（サンプルではSetting.json）に値を入力します。  
 
 - Azure
     - SubscriptionID
@@ -24,7 +26,7 @@ Azure PowerShell 5.7.0
 - Convert
     - EntryType
         - インポートファイルで指定するNSGの登録（更新）、または削除の文言  
-        削除の文言には`DeleteRule`を`true`にします。 
+        削除の文言には`DeleteRule`を`true`にします。  
 - Import
     - InitialDirectory
         - インポートファイル選択ダイアログの初期ディレクトリ
@@ -65,4 +67,4 @@ UTF8で記述ください。
 `bin`と同じ階層に`log`フォルダを作成します。  
 
 ## 実行例
-AzureNSGRegister.ps1 -ConfigFileName Setting.json
+AzureNSGRegister.ps1 -ConfigFileName Setting.json  
